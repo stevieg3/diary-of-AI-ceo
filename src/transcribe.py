@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv('.env')
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 HF_ACCESS_TOKEN = os.getenv("HF_ACCESS_TOKEN")
 
@@ -30,7 +30,7 @@ WHISPER_BATCH_SIZE = 16
 
 WHISPER_COMPUTE_TYPE = 'float16'  # change to "int8" if low on GPU mem (may reduce accuracy)
 
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 LARGE_GAP_BETWEEN_DIALOGUE_SEC = 10
 
@@ -97,14 +97,16 @@ def main():
         download_audio_from_youtube(url=u, output_path=AUDIO_OUTPUT_PATH)
         logging.info(f"Finished downloading audio from {u}")
 
-        video_filename = os.listdir(AUDIO_OUTPUT_PATH)
-        video_title = video_filename[0].split('.' + AUDIO_EXT)[0]
+        video_filename = os.listdir(AUDIO_OUTPUT_PATH)[0]
+        video_title = video_filename.split('.' + AUDIO_EXT)[0]
 
         logging.info(f"Video title: {video_title}")
 
         audio_file = AUDIO_OUTPUT_PATH + '/' + video_filename
 
         # 1. Transcribe with original whisper (batched)
+        logging.info("Transcribing audio with Whisper")
+        logging.info(f"Device: {DEVICE}")
         model = whisperx.load_model(WHISPER_MODEL, DEVICE, compute_type=WHISPER_COMPUTE_TYPE)
         audio = whisperx.load_audio(audio_file)
         result = model.transcribe(audio, batch_size=WHISPER_BATCH_SIZE)
@@ -114,6 +116,7 @@ def main():
         result = whisperx.align(result["segments"], model_a, metadata, audio, DEVICE, return_char_alignments=False)
 
         # 3. Assign speaker labels
+        logging.info("Adding speaker labels to transcription")
         diarize_model = whisperx.DiarizationPipeline(use_auth_token=HF_ACCESS_TOKEN, device=DEVICE)
         diarize_segments = diarize_model(audio)
         result = whisperx.assign_word_speakers(diarize_segments, result)
@@ -168,7 +171,6 @@ def main():
         transcription_df.drop(columns=['overlap'], inplace=True)
 
         # 8. Log first few dialogues
-
         logging.info("Dialogue start...")
 
         n = 10
