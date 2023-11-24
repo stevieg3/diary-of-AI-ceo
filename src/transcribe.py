@@ -85,12 +85,25 @@ def get_video_urls_from_channel(channel_url: str) -> list[str]:
     return urls
 
 
+def delete_files_in_directory(directory):
+    """Delete all files in the specified directory.
+
+    Args:
+    directory (str): Path to the directory.
+
+    """
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
+
 def main():
     urls = get_video_urls_from_channel(DOAC_CHANNEL_URL)
 
     # TODO: Drop sampling
-    np.random.seed(3)
-    urls = np.random.choice(urls, replace=False, size=1).tolist()
+    np.random.seed(42)
+    urls = np.random.choice(urls, replace=False, size=5).tolist()
 
     for u in tqdm(urls):
         
@@ -123,6 +136,7 @@ def main():
         result = whisperx.assign_word_speakers(diarize_segments, result)
 
         # 4. Put results into a DataFrame
+        logging.info("Saving transcript as CSV")
         transcription_df = pd.DataFrame([{key: value for key, value in d.items() if key != 'words'} for d in result['segments']])
         
         # total_null_speaker_rows = transcription_df['speaker'].isnull().sum()
@@ -184,6 +198,12 @@ def main():
         # 9. Save
         os.makedirs('data/transcriptions', exist_ok=True)
         transcription_df.to_csv('data/transcriptions' + '/' + video_title + '.csv', index=False)
+
+        # 10. Delete audio
+        logging.info("Deleting audio")
+        delete_files_in_directory(AUDIO_OUTPUT_PATH)
+
+        logging.info(f"Finished transcribing {video_title}")
 
 
 if __name__ == "__main__":
