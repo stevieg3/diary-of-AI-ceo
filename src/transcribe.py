@@ -1,4 +1,5 @@
 import os
+import gc
 import logging
 
 import pandas as pd
@@ -125,9 +126,19 @@ def main():
         audio = whisperx.load_audio(audio_file)
         result = model.transcribe(audio, batch_size=WHISPER_BATCH_SIZE)
 
+        # delete model if low on GPU resources
+        gc.collect()
+        torch.cuda.empty_cache()
+        del model
+
         # 2. Align whisper output
         model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=DEVICE)
         result = whisperx.align(result["segments"], model_a, metadata, audio, DEVICE, return_char_alignments=False)
+
+        # delete model if low on GPU resources
+        gc.collect()
+        torch.cuda.empty_cache()
+        del model_a
 
         # 3. Assign speaker labels
         logging.info("Adding speaker labels to transcription")
