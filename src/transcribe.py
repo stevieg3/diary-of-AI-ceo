@@ -102,10 +102,6 @@ def delete_files_in_directory(directory):
 def main():
     urls = get_video_urls_from_channel(DOAC_CHANNEL_URL)
 
-    # TODO: Drop sampling
-    np.random.seed(42)
-    urls = np.random.choice(urls, replace=False, size=5).tolist()
-
     for u in tqdm(urls):
         
         logging.info(f"Downloading audio from {u}")
