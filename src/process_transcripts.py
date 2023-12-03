@@ -285,7 +285,7 @@ ALL_PODCAST_META_DATA = load_all_podcast_meta_data()
 
 def main():
     # Get file names in data/transcriptions
-    transcription_files = os.listdir("data/transcriptions")
+    transcription_files = os.listdir("data/transcriptions/raw")
 
     # Loop through files
     for file_name in transcription_files:
@@ -299,7 +299,7 @@ def main():
             continue
 
         # Load transcript
-        transcript_df = pd.read_csv(f"data/transcriptions/{file_name}")
+        transcript_df = pd.read_csv(f"data/transcriptions/raw/{file_name}")
 
         # Strip intro
         transcript_df = strip_intro(transcript_df, intro_end_time)
@@ -335,7 +335,7 @@ def main():
         # Aggregate dialogue
         transcript_df = aggregate_dialogue(transcript_df)
 
-        transcript_df.to_csv(f"data/TEMP_{file_name.split('.')[0]}.csv", index=False)
+        transcript_df.to_csv(f"data/transcriptions/processed/{file_name.split('.')[0]}.csv", index=False)
 
 
 if __name__ == "__main__":
