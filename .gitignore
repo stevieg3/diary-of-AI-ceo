@@ -1,6 +1,7 @@
 *.mp3
 *.csv
 *TODO.md
+*.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

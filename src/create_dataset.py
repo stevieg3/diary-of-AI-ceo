@@ -1,14 +1,4 @@
-"""
-- "Chris Williamson： The Shocking New Research On Why Men And Women Are No Longer Compatible! ｜ E237.csv"
-    - Swap host and guest
-    - Drop first row
-- "The Love Expert： Why Women Are Addicted To Toxic Men,＂Have A Boring Relationship Instead!＂ Logan Ury.csv"
-- "The Coffee Expert： The Surprising Link Between Coffee & Your Mental Health! James Hoffmann.csv"
-- "Derren Brown： UNLOCK The Secret Power Of Your Mind! ｜ E212.csv"
-- "Sadhguru PREDICTION： Why We Are Now On ＂The Brink Of Extinction!＂.csv"
-- "Psychology Expert： How Colours, Your First Name And Your Location Might Be Ruining Your Life!.csv"
-    - Drop
-"""
+import os
 
 import pandas as pd
 from transformers import AutoTokenizer
@@ -26,7 +16,38 @@ CONTEXT_LENGTH = 4096
 
 MISTRAL_FORMAT_MESSAGE_ROW = lambda x: {'role': x['speaker'], 'content': x['text']}
 
-MESSAGE_GROUPING_BUFFER = 50
+MESSAGE_GROUPING_BUFFER = 175
+
+EPISODES_TO_DROP = [
+    "The Love Expert： Why Women Are Addicted To Toxic Men,＂Have A Boring Relationship Instead!＂ Logan Ury.csv",
+    "The Coffee Expert： The Surprising Link Between Coffee & Your Mental Health! James Hoffmann.csv",
+    "Derren Brown： UNLOCK The Secret Power Of Your Mind! ｜ E212.csv",
+    "Sadhguru PREDICTION： Why We Are Now On ＂The Brink Of Extinction!＂.csv",
+    "Psychology Expert： How Colours, Your First Name And Your Location Might Be Ruining Your Life!.csv",
+]
+
+EPISODES_TO_INVERT_SPEAKER = [
+    "Chris Williamson： The Shocking New Research On Why Men And Women Are No Longer Compatible! ｜ E237.csv",
+]
+
+
+def invert_speaker(episode_transcript_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    This function inverts the speaker of each message in an episode transcript. The first row is dropped.
+
+    Args:
+        episode_transcript_df (DataFrame): A dataframe containing episode transcript data
+
+    Returns:
+        DataFrame: A dataframe containing episode transcript data with inverted speakers
+    """
+    speakers = episode_transcript_df['speaker'].unique().tolist()
+    swap_speaker_map = dict(zip(speakers, speakers[::-1]))
+    episode_transcript_df['speaker'] = episode_transcript_df['speaker'].map(swap_speaker_map)
+    episode_transcript_df = episode_transcript_df.iloc[1:]
+    
+    return episode_transcript_df
+
 
 
 def get_example_groups(episode_transcript_df, context_length, buffer=50):
@@ -37,18 +58,9 @@ def get_example_groups(episode_transcript_df, context_length, buffer=50):
 
     A buffer is included to account for any special tokens added by the tokenizer. 
 
-    The logic of the function is as follows:
-    1. Initialize cumulative token count (cumsum) and a group identifier (group_id).
-    2. The threshold for group size is set as context_length minus the buffer.
-    3. Iterate over each message, adding its token count to cumsum.
-    4. If cumsum exceeds the threshold and the current speaker is 'user', start a new group.
-    5. If cumsum exceeds the threshold and the current speaker is not 'user', include the current and previous message in the new group.
-    6. Append the group identifier to a list for each message.
-    7. The function returns a list where each element corresponds to a message in the original dataframe, and the value is the group identifier for that message.
-
-    Preconditions:
-    - The first speaker in the transcript must be 'user'.
-    - No single message can have more tokens than the threshold (context_length - buffer).
+    The first speaker in the transcript must be 'user'.
+    
+    No single message can have more tokens than the threshold (context_length - buffer).
 
     Args:
         episode_transcript_df (DataFrame): A dataframe containing episode transcript data with columns 'n_tokens' and 'speaker'.
@@ -106,7 +118,7 @@ def create_examples_from_episode(episode_transcript, episode_file, tokenizer, fo
 
     episode_transcript['n_tokens'] = episode_transcript['text'].apply(lambda text: len(tokenizer.encode(text)))
 
-    episode_transcript['group_id'] = get_example_groups(episode_transcript, CONTEXT_LENGTH)
+    episode_transcript['group_id'] = get_example_groups(episode_transcript, CONTEXT_LENGTH, MESSAGE_GROUPING_BUFFER)
 
     episode_examples = episode_transcript.groupby("group_id")["chat"].apply(list).reset_index()
     episode_examples.drop(columns=['group_id'], inplace=True)
@@ -123,12 +135,27 @@ def create_examples_from_episode(episode_transcript, episode_file, tokenizer, fo
 
 def main():
 
-    # TODO: Loop through episodes, correct specific episodes, combine and write to CSV
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
 
-    episode_transcript = pd.read_csv(PROCESSED_TRANSCRIPTIONS_PATH + episode_file)
+    all_examples = []
 
-    episode_examples = create_examples_from_episode(episode_transcript, episode_file, tokenizer=tokenizer, format_message_row=MISTRAL_FORMAT_MESSAGE_ROW)
+    for episode_file in os.listdir(PROCESSED_TRANSCRIPTIONS_PATH):
+
+        if episode_file in EPISODES_TO_DROP:
+            continue    
+
+        episode_transcript = pd.read_csv(PROCESSED_TRANSCRIPTIONS_PATH + episode_file)
+
+        if episode_file in EPISODES_TO_INVERT_SPEAKER:
+            episode_transcript = invert_speaker(episode_transcript)
+
+        episode_examples = create_examples_from_episode(episode_transcript, episode_file, tokenizer=tokenizer, format_message_row=MISTRAL_FORMAT_MESSAGE_ROW)
+
+        all_examples.append(episode_examples)
+
+    all_examples_df = pd.concat(all_examples, ignore_index=True)
+
+    all_examples_df.to_csv('data/examples.csv', index=False)
 
 
 if __name__ == "__main__":
