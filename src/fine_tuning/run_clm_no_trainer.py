@@ -54,6 +54,7 @@ from transformers import (
 )
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
+from peft import LoraConfig, TaskType, get_peft_model
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -109,6 +110,24 @@ def parse_args():
         type=str,
         default=None,
         help="Pretrained tokenizer name or path if not the same as model_name",
+    )
+    parser.add_argument(
+        "--lora_attention_dim",
+        type=int,
+        default=8,
+        help="Lora attention dimension",
+    )
+    parser.add_argument(
+        "--lora_alpha",
+        type=int,
+        default=32,
+        help="The alpha parameter for Lora scaling.",
+    )
+    parser.add_argument(
+        "--lora_dropout",
+        type=float,
+        default=0.1,
+        help="The dropout probability for Lora layers.",
     )
     parser.add_argument(
         "--use_slow_tokenizer",
@@ -413,6 +432,17 @@ def main():
     else:
         logger.info("Training new model from scratch")
         model = AutoModelForCausalLM.from_config(config, trust_remote_code=args.trust_remote_code)
+
+    # LoRA
+    peft_config = LoraConfig(
+        task_type=TaskType.CAUSAL_LM, 
+        inference_mode=False, 
+        r=args.lora_attention_dim,
+        lora_alpha=args.lora_alpha, 
+        lora_dropout=args.lora_dropout,
+    )
+    model = get_peft_model(model, peft_config)
+    model.print_trainable_parameters()
 
     # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
     # on a small vocab and want a smaller embedding size, remove this test.
