@@ -49,7 +49,7 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     SchedulerType,
-    default_data_collator,
+    DataCollatorForLanguageModeling,
     get_scheduler,
     BitsAndBytesConfig
 )
@@ -416,23 +416,14 @@ def main():
         tokenizer = AutoTokenizer.from_pretrained(
             args.model_name_or_path, use_fast=not args.use_slow_tokenizer, trust_remote_code=args.trust_remote_code
         )
+        if args.model_name_or_path == "mistralai/Mistral-7B-Instruct-v0.2":
+            logger.info("Adding pad token for Mistral-7B-Instruct-v0.2")
+            tokenizer.add_special_tokens({"pad_token": "</s>"})
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported by this script. "
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
-
-    if args.model_name_or_path:
-        model = AutoModelForCausalLM.from_pretrained(
-            args.model_name_or_path,
-            from_tf=bool(".ckpt" in args.model_name_or_path),
-            config=config,
-            low_cpu_mem_usage=args.low_cpu_mem_usage,
-            trust_remote_code=args.trust_remote_code,
-        )
-    else:
-        logger.info("Training new model from scratch")
-        model = AutoModelForCausalLM.from_config(config, trust_remote_code=args.trust_remote_code)
 
     # bitsandbytes
     bnb_config = BitsAndBytesConfig(
@@ -441,9 +432,22 @@ def main():
         bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.bfloat16
     )
-    model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, device_map={"":0})
-    model.gradient_checkpointing_enable()
-    model = prepare_model_for_kbit_training(model)
+
+    if args.model_name_or_path:
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_name_or_path,
+            from_tf=bool(".ckpt" in args.model_name_or_path),
+            config=config,
+            low_cpu_mem_usage=args.low_cpu_mem_usage,
+            trust_remote_code=args.trust_remote_code,
+            quantization_config=bnb_config,
+            device_map={"":0},
+        )
+        model.gradient_checkpointing_enable()
+        model = prepare_model_for_kbit_training(model)
+    else:
+        logger.info("Training new model from scratch")
+        model = AutoModelForCausalLM.from_config(config, trust_remote_code=args.trust_remote_code)
 
     # LoRA
     logger.info("Using LoRA")
@@ -537,11 +541,13 @@ def main():
         logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
 
     # DataLoaders creation:
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)    
+    
     train_dataloader = DataLoader(
-        train_dataset, shuffle=True, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size
+        train_dataset, shuffle=True, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
     )
     eval_dataloader = DataLoader(
-        eval_dataset, collate_fn=default_data_collator, batch_size=args.per_device_eval_batch_size
+        eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size
     )
 
     # Optimizer

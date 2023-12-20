@@ -2,9 +2,9 @@ python src/fine_tuning/run_clm_no_trainer.py \
     --model_name_or_path mistralai/Mistral-7B-Instruct-v0.2 \
     --train_file data/splits/train.csv \
     --validation_file data/splits/val.csv \
-    --per_device_train_batch_size 8 \
-    --per_device_eval_batch_size 8 \
-    --gradient_accumulation_steps 1 \
+    --per_device_train_batch_size 1 \
+    --per_device_eval_batch_size 1 \
+    --gradient_accumulation_steps 8 \
     --lr_scheduler_type linear \
     --num_warmup_steps 0 \
     --learning_rate 3e-4 \
@@ -14,4 +14,5 @@ python src/fine_tuning/run_clm_no_trainer.py \
     --num_train_epochs 3 \
     --seed 42 \
     --report_to wandb \
-    --output_dir runs
+    --output_dir runs \
+    --low_cpu_mem_usage
