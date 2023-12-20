@@ -51,10 +51,11 @@ from transformers import (
     SchedulerType,
     default_data_collator,
     get_scheduler,
+    BitsAndBytesConfig
 )
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
-from peft import LoraConfig, TaskType, get_peft_model
+from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -432,6 +433,17 @@ def main():
     else:
         logger.info("Training new model from scratch")
         model = AutoModelForCausalLM.from_config(config, trust_remote_code=args.trust_remote_code)
+
+    # bitsandbytes
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16
+    )
+    model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, device_map={"":0})
+    model.gradient_checkpointing_enable()
+    model = prepare_model_for_kbit_training(model)
 
     # LoRA
     logger.info("Using LoRA")

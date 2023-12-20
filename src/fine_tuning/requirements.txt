@@ -5,3 +5,4 @@ protobuf
 evaluate
 scikit-learn
 peft
+bitsandbytes
