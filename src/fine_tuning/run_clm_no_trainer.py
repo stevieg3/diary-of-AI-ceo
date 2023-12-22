@@ -56,6 +56,7 @@ from transformers import (
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
+import bitsandbytes as bnb
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -418,7 +419,7 @@ def main():
         )
         if args.model_name_or_path == "mistralai/Mistral-7B-Instruct-v0.2":
             logger.info("Adding pad token for Mistral-7B-Instruct-v0.2")
-            tokenizer.add_special_tokens({"pad_token": "</s>"})
+            tokenizer.add_special_tokens({"pad_token": tokenizer.eos_token})
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported by this script. "
@@ -445,6 +446,7 @@ def main():
         )
         model.gradient_checkpointing_enable()
         model = prepare_model_for_kbit_training(model)
+
     else:
         logger.info("Training new model from scratch")
         model = AutoModelForCausalLM.from_config(config, trust_remote_code=args.trust_remote_code)
@@ -453,10 +455,12 @@ def main():
     logger.info("Using LoRA")
     peft_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM, 
-        inference_mode=False, 
+        inference_mode=False,
         r=args.lora_attention_dim,
         lora_alpha=args.lora_alpha, 
         lora_dropout=args.lora_dropout,
+        bias="none",
+        target_modules=['k_proj', 'q_proj', 'v_proj', 'o_proj', "gate_proj", "down_proj", "up_proj"],
     )
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
@@ -563,7 +567,8 @@ def main():
             "weight_decay": 0.0,
         },
     ]
-    optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
+    # optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
+    optimizer = bnb.optim.PagedAdamW8bit(optimizer_grouped_parameters, lr=args.learning_rate)
 
     # Scheduler and math around the number of training steps.
     overrode_max_train_steps = False

@@ -44,3 +44,6 @@ export PATH=/usr/local/cuda-12.1/bin${PATH:+:${PATH}}
 
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 ```
+
+Learnings:
+Training on long sequences consumes more memory
