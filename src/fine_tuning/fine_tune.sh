@@ -3,16 +3,18 @@ python src/fine_tuning/run_clm_no_trainer.py \
     --train_file data/splits/train.csv \
     --validation_file data/splits/val.csv \
     --per_device_train_batch_size 1 \
-    --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 8 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
     --lr_scheduler_type linear \
     --num_warmup_steps 0 \
     --learning_rate 3e-4 \
     --lora_attention_dim 8 \
     --lora_alpha 32 \
     --lora_dropout 0.1 \
+    --max_train_steps 1 \
     --num_train_epochs 3 \
     --seed 42 \
+    --with_tracking \
     --report_to wandb \
     --output_dir runs \
     --low_cpu_mem_usage
