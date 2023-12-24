@@ -1,4 +1,4 @@
-python src/fine_tuning/run_clm_no_trainer.py \
+python src/fine_tuning/hugging_face/run_clm_no_trainer.py \
     --model_name_or_path mistralai/Mistral-7B-Instruct-v0.2 \
     --train_file data/splits/train.csv \
     --validation_file data/splits/val.csv \
