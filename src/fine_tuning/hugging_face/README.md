@@ -1,3 +1,4 @@
 - `demo_run.py`: Script version of this example QLoRA Colab [notebook](https://colab.research.google.com/drive/1VoYNfYDKcKRQRor98Zbf2-9VQTtGJ24k?usp=sharing#scrollTo=Ybeyl20n3dYH) but using Mistral v0.2. Uses Hugging Face `Trainer` class.
 - `run.py`: Clone of `demo_run.py` but using own data splits.
 - `run_clm_no_trainer.py`: Edited version of Hugging Face example [script](https://github.com/huggingface/transformers/blob/main/examples/pytorch/language-modeling/run_clm_no_trainer.py).
+    - Note: Doesn't natively support resuming training from a PEFT checkpoint
