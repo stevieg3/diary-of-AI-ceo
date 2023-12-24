@@ -252,6 +252,18 @@ def parse_args():
         ),
     )
     parser.add_argument(
+        "--wandb_project_name",
+        type=str,
+        default=None,
+        help="The project name to use in wandb",
+    )
+    parser.add_argument(
+        "--wandb_run_name",
+        type=str,
+        default=None,
+        help="The run name to use in wandb",
+    )
+    parser.add_argument(
         "--low_cpu_mem_usage",
         action="store_true",
         help=(
@@ -298,6 +310,20 @@ def main():
         accelerator_log_kwargs["project_dir"] = args.output_dir
 
     accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
+
+    if args.report_to == 'wandb':
+        
+        if args.wandb_project_name:
+            wandb_project_name = args.wandb_project_name
+            if args.wandb_run_name:
+                run_name = args.wandb_run_name
+            else:
+                run_name = None
+        else:
+            wandb_project_name = None
+            run_name = None
+        
+        accelerator.init_trackers(wandb_project_name, config={}, init_kwargs={"wandb": {"name": run_name}})
 
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(

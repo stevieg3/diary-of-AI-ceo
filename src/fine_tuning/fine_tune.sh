@@ -6,15 +6,16 @@ python src/fine_tuning/run_clm_no_trainer.py \
     --per_device_eval_batch_size 2 \
     --gradient_accumulation_steps 4 \
     --lr_scheduler_type linear \
-    --num_warmup_steps 0 \
+    --num_warmup_steps 4 \
     --learning_rate 3e-4 \
     --lora_attention_dim 8 \
     --lora_alpha 32 \
     --lora_dropout 0.1 \
-    --max_train_steps 1 \
-    --num_train_epochs 3 \
+    --num_train_epochs 4 \
     --seed 42 \
     --with_tracking \
     --report_to wandb \
+    --wandb_project_name doaic \
+    --wandb_run_name full_2_epochs \
     --output_dir runs \
     --low_cpu_mem_usage
