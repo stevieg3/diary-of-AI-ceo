@@ -17,5 +17,5 @@ python src/fine_tuning/run_clm_no_trainer.py \
     --report_to wandb \
     --wandb_project_name doaic \
     --wandb_run_name full_2_epochs \
-    --output_dir runs \
+    --output_dir outputs \
     --low_cpu_mem_usage
