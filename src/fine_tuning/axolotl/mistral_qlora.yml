@@ -1,4 +1,4 @@
-base_model: mistralai/Mistral-7B-v0.1
+base_model: mistralai/Mistral-7B-Instruct-v0.1
 model_type: MistralForCausalLM
 tokenizer_type: LlamaTokenizer
 is_mistral_derived_model: true
@@ -17,12 +17,12 @@ output_dir: ./qlora-out
 adapter: qlora
 lora_model_dir:
 
-sequence_len: 8192
+sequence_len: 4096
 sample_packing: true
 pad_to_sequence_len: true
 
-lora_r: 32
-lora_alpha: 16
+lora_r: 8
+lora_alpha: 32
 lora_dropout: 0.05
 lora_target_linear: true
 lora_fan_in_fan_out:
@@ -42,7 +42,7 @@ wandb_name:
 wandb_log_model:
 
 gradient_accumulation_steps: 4
-micro_batch_size: 2
+micro_batch_size: 1
 num_epochs: 1
 optimizer: adamw_bnb_8bit
 lr_scheduler: cosine
@@ -50,8 +50,8 @@ learning_rate: 0.0002
 
 train_on_inputs: false
 group_by_length: false
-bf16: true
-fp16: false
+bf16: false
+fp16: true
 tf32: false
 
 gradient_checkpointing: true
@@ -60,7 +60,7 @@ resume_from_checkpoint:
 local_rank:
 logging_steps: 1
 xformers_attention:
-flash_attention: true
+flash_attention: false
 
 loss_watchdog_threshold: 5.0
 loss_watchdog_patience: 3
