@@ -1,5 +1,6 @@
 *.mp3
 *.csv
+*.jsonl
 *TODO.md
 *.ipynb
 *.zip
