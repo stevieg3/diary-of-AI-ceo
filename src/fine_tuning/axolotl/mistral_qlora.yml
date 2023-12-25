@@ -5,11 +5,11 @@ is_mistral_derived_model: true
 
 load_in_8bit: false
 load_in_4bit: true
-strict: false
+strict: false  # if false, allow writing kwargs to cfg even if it's not in the yml already
 
 datasets:
-  - path: mhenrichsen/alpaca_2k_test
-    type: alpaca
+  - path: data/axolotl/transcriptions.jsonl
+    type: completion
 dataset_prepared_path: last_run_prepared
 val_set_size: 0.1
 output_dir: ./qlora-out
@@ -18,13 +18,13 @@ adapter: qlora
 lora_model_dir:
 
 sequence_len: 4096
-sample_packing: true
+sample_packing: false  # combine separate samples into single sequence
 pad_to_sequence_len: true
 
 lora_r: 8
 lora_alpha: 32
 lora_dropout: 0.05
-lora_target_linear: true
+lora_target_linear: true  # combined with lora_target_modules
 lora_fan_in_fan_out:
 lora_target_modules:
   - gate_proj
@@ -46,7 +46,7 @@ micro_batch_size: 1
 num_epochs: 1
 optimizer: adamw_bnb_8bit
 lr_scheduler: cosine
-learning_rate: 0.0002
+learning_rate: 0.0003
 
 train_on_inputs: false
 group_by_length: false
@@ -71,6 +71,7 @@ eval_table_size:
 eval_table_max_new_tokens: 128
 saves_per_epoch: 1
 debug:
+debug_num_examples:
 deepspeed:
 weight_decay: 0.0
 fsdp:
@@ -79,3 +80,5 @@ special_tokens:
   bos_token: "<s>"
   eos_token: "</s>"
   unk_token: "<unk>"
+
+seed: 42
