@@ -1,0 +1,1 @@
+accelerate launch -m axolotl.cli.train src/fine_tuning/axolotl/mistral_qlora.yml 2>&1 | tee "logs/axolotl_$(date +%Y%m%d_%H%M%S).log"

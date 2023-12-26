@@ -8,6 +8,8 @@
 *wandb/
 *runs/
 *outputs/
+*completed_model/
+*last_run_prepared/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -10,7 +10,7 @@ load_in_4bit: true
 datasets:
   - path: data/axolotl/transcriptions.jsonl
     type: completion
-val_set_size: 0.01
+val_set_size: 0.05
 
 sequence_len: 4096
 sample_packing: false  # combine separate samples into single sequence
@@ -44,14 +44,14 @@ gradient_accumulation_steps: 4
 micro_batch_size: 1
 eval_batch_size: 2
 warmup_steps: 10
-num_epochs: 1
+num_epochs: 5
 # max_steps:
 optimizer: adamw_bnb_8bit
 lr_scheduler: cosine
 learning_rate: 0.0003
 weight_decay: 0.0
 gradient_checkpointing: true
-early_stopping_patience: 5 # Stop training after this many evaluation losses have increased in a row
+early_stopping_patience: # Stop training after this many evaluation losses have increased in a row
 
 train_on_inputs: false
 group_by_length: false
@@ -59,7 +59,7 @@ bf16: false # require >=ampere
 fp16: true
 tf32: false # require >=ampere
 
-resume_from_checkpoint:
+# resume_from_checkpoint: completed_model/checkpoint-5
 # If resume_from_checkpoint isn't set and you simply want it to start where it left off.
 # Be careful with this being turned on between different models.
 auto_resume_from_checkpoints: false
@@ -68,7 +68,7 @@ local_rank: # Don't mess with this, it's here for accelerate and torchrun
 loss_watchdog_threshold: # High loss value, indicating the learning has broken down (a good estimate is ~2 times the loss at the start of training)
 loss_watchdog_patience: # Number of high-loss steps in a row before the trainer aborts (default: 3)
 
-logging_steps: 5
+logging_steps: 1
 eval_steps: # Leave empty to eval at each epoch, integers for every N steps. decimal for fraction of total steps
 save_steps: # Leave empty to save at each epoch
 save_total_limit: 3
