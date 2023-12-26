@@ -1,26 +1,25 @@
 base_model: mistralai/Mistral-7B-Instruct-v0.1
-model_type: MistralForCausalLM
-tokenizer_type: LlamaTokenizer
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+# if you set this to true, `padding_side` will be set to "left" by default
 is_mistral_derived_model: true
 
 load_in_8bit: false
 load_in_4bit: true
-strict: false  # if false, allow writing kwargs to cfg even if it's not in the yml already
 
 datasets:
   - path: data/axolotl/transcriptions.jsonl
     type: completion
-dataset_prepared_path: last_run_prepared
-val_set_size: 0.1
-output_dir: ./outputs
-
-adapter: qlora
-lora_model_dir:
+val_set_size: 0.01
 
 sequence_len: 4096
 sample_packing: false  # combine separate samples into single sequence
 pad_to_sequence_len: true
 
+adapter: qlora
+# If you already have a lora model trained that you want to load, put that here.
+# This means after training, if you want to test the model, you should set this to the value of `lora_out_dir`.
+lora_model_dir:
 lora_r: 8
 lora_alpha: 32
 lora_dropout: 0.05
@@ -35,45 +34,48 @@ lora_target_modules:
   - k_proj
   - o_proj
 
-wandb_project:
-wandb_entity:
-wandb_watch:
-wandb_name:
-wandb_log_model:
+wandb_project: doaic
+wandb_name: axolotl-test
+wandb_log_model: # "checkpoint" to log model to wandb Artifacts every `save_steps` or "end" to log only at the end of training
+
+output_dir: ./completed_model
 
 gradient_accumulation_steps: 4
 micro_batch_size: 1
+eval_batch_size: 2
+warmup_steps: 10
 num_epochs: 1
+# max_steps:
 optimizer: adamw_bnb_8bit
 lr_scheduler: cosine
 learning_rate: 0.0003
+weight_decay: 0.0
+gradient_checkpointing: true
+early_stopping_patience: 5 # Stop training after this many evaluation losses have increased in a row
 
 train_on_inputs: false
 group_by_length: false
-bf16: false
+bf16: false # require >=ampere
 fp16: true
-tf32: false
+tf32: false # require >=ampere
 
-gradient_checkpointing: true
-early_stopping_patience:
 resume_from_checkpoint:
-local_rank:
-logging_steps: 1
-xformers_attention:
-flash_attention: false
+# If resume_from_checkpoint isn't set and you simply want it to start where it left off.
+# Be careful with this being turned on between different models.
+auto_resume_from_checkpoints: false
+local_rank: # Don't mess with this, it's here for accelerate and torchrun
 
-loss_watchdog_threshold: 5.0
-loss_watchdog_patience: 3
+loss_watchdog_threshold: # High loss value, indicating the learning has broken down (a good estimate is ~2 times the loss at the start of training)
+loss_watchdog_patience: # Number of high-loss steps in a row before the trainer aborts (default: 3)
 
-warmup_steps: 10
-evals_per_epoch: 4
-eval_table_size:
-eval_table_max_new_tokens: 128
-saves_per_epoch: 1
-debug:
-debug_num_examples:
+logging_steps: 5
+eval_steps: # Leave empty to eval at each epoch, integers for every N steps. decimal for fraction of total steps
+save_steps: # Leave empty to save at each epoch
+save_total_limit: 3
+eval_table_size: # Approximate number of predictions sent to wandb depending on batch size. Enabled above 0. Default is 0
+eval_table_max_new_tokens: # Total number of tokens generated for predictions sent to wandb. Default is 128
+
 deepspeed:
-weight_decay: 0.0
 fsdp:
 fsdp_config:
 special_tokens:
@@ -82,3 +84,6 @@ special_tokens:
   unk_token: "<unk>"
 
 seed: 42
+strict: false  # Allow overwrite yml config using from cli
+debug:
+debug_num_examples:
