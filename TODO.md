@@ -11,6 +11,9 @@
     - seems like matching not working if 'No 1' etc. in title
 - Check first line. If only a part sentence, drop podcast
 
+- Generate beyond context window in smart way
+
+
 - Data prep stuff below:
 
 
