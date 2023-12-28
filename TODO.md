@@ -1,4 +1,3 @@
-- Run generations, then commit
 - Write down learnings from first training (see generation.ipynb, write down GPU used, hours taken etc., mention approach to prompting i.e. GPT-4 and sampling choices)
 
 - Delete redundant clusters
