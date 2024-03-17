@@ -1,8 +1,4 @@
-- Write down learnings from first training (see generation.ipynb, write down GPU used, hours taken etc., mention approach to prompting i.e. GPT-4 and sampling choices)
-
-- Delete redundant clusters
-    Before deleting cluster:
-        - Download any local, uncommited files e.g. notebooks, models (?), text files
+- Write down learnings from first training (see generation.ipynb,)
 
 - Continue transcribing videos from Jamie Carragher - find out where to put lanugage='en' 
 
@@ -16,6 +12,8 @@
 
 - Data prep stuff below:
 
+
+- Hard to "initialise" podcast unless use GPT-4 prompt
 
 - Currently model is reliant on world knowledge of the guest to produce good responses. To add more context we could:
     - Add wiki page of guest at start or as system prompt (see https://huggingface.co/datasets/olm/wikipedia)
