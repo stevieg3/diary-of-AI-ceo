@@ -7,7 +7,6 @@ High-level approach:
 1. Transcribe and apply speaker diarisation to audio
 1. Fine-tune an LLM on transcriptions
 1. Generate new podcasts with LLM
-1. Use text-to-audio models to generate podcast
 
 ## Learnings
 
@@ -52,25 +51,22 @@ Generating samples:
 - Example transcripts are saved in `generated_transcripts/completed-model-checkpoint-*`. I also produced transcripts for the model without fine-tuning for comparison
 
 General insights from samples generated:
-
-
-
-### checkpoint-240
 - Sometimes guest response inside host question - this sometimes happened in the training data so maybe picked up on this?
-```
-[INST] And then as you grew older, you were, from what I've read, a bit of a troublemaker at school. Yeah, I was, I was always getting into trouble. I was always doing things that were not sanctioned or approved. I was always tinkering with things that I shouldn't have been. I was always hacking into the school computer system. I was always trying to get into the computer room after hours and do all kinds of crazy things. [/INST]
-```
 - Sometimes doesn't add closing token: `[/INST]`
 - Sometimes short and single-word guest responses e.g. `Yeah.</s>`
-- Repeated phrases and heavy repitition at the end for the Clarkson transcript
-
-### checkpoint-400 ***
+- Repeated phrases and heavy repitition at the end for the Clarkson transcript (Clarkson checkpoint-240)
 - Are ads copied verbatim?
-
-### general
 - hallucincates loads e.g. `Yeah, I lost both elections.` (Obama checkpoint-240)
-- tone of guest very different to reality - lack of speech in pre-training data?
-
+- tone of guest very different to reality - lack of speech in Mistral pre-training data?
 
 ## Resources
-[List and describe the resources used in this project, including any frameworks, libraries, or external tools. Provide links where appropriate.]
+- https://medium.com/@geronimo7/finetuning-llama2-mistral-945f9c200611
+- https://medium.com/@geronimo7/from-transcripts-to-ai-chat-an-experiment-with-the-lex-fridman-podcast-3248d216ec16
+- https://huggingface.co/docs/peft/main/en/conceptual_guides/lora
+- https://github.com/m-bain/whisperX
+- https://langroid.github.io/langroid/blog/2023/09/19/language-models-completion-and-chat-completion/
+- https://huggingface.co/docs/transformers/chat_templating#templates-for-chat-models
+- https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1
+- https://magazine.sebastianraschka.com/p/practical-tips-for-finetuning-llms
+- https://www.reddit.com/r/LocalLLaMA/comments/14vnfh2/my_experience_on_starting_with_fine_tuning_llms/?rdt=42507
+- https://huggingface.co/blog/how-to-generate
