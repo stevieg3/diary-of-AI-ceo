@@ -101,6 +101,10 @@ def delete_files_in_directory(directory):
 
 def main():
     urls = get_video_urls_from_channel(DOAC_CHANNEL_URL)
+    # Write urls as separate lines in a text file
+    with open('data/video_urls.txt', 'w') as f:
+        for u in urls:
+            f.write(u + '\n')
 
     for u in tqdm(urls):
         
@@ -120,7 +124,7 @@ def main():
         logging.info(f"Device: {DEVICE}")
         model = whisperx.load_model(WHISPER_MODEL, DEVICE, compute_type=WHISPER_COMPUTE_TYPE)
         audio = whisperx.load_audio(audio_file)
-        result = model.transcribe(audio, batch_size=WHISPER_BATCH_SIZE)
+        result = model.transcribe(audio, batch_size=WHISPER_BATCH_SIZE, language='en')
 
         # delete model if low on GPU resources
         gc.collect()
@@ -146,67 +150,11 @@ def main():
         logging.info("Saving transcript as CSV")
         transcription_df = pd.DataFrame([{key: value for key, value in d.items() if key != 'words'} for d in result['segments']])
         
-        # total_null_speaker_rows = transcription_df['speaker'].isnull().sum()
-        # logging.info(f"Total null speaker rows: {total_null_speaker_rows}")
-        # logging.info(transcription_df[transcription_df['speaker'].isnull()])
-        # transcription_df.dropna(subset=['speaker'], inplace=True)
-        # transcription_df.reset_index(drop=True, inplace=True)
-        
-        # # 5. Drop introduction by searching for first gap of more than X seconds between dialogue
-        # transcription_df['time_to_next'] = transcription_df['start'].shift(-1) - transcription_df['end']
-        # intro_end_idx = transcription_df[transcription_df['time_to_next'] > LARGE_GAP_BETWEEN_DIALOGUE_SEC].head(1).index.item()
-        # transcription_df = transcription_df.iloc[intro_end_idx + 1:]
-
-        # # 6. Group consecutive dialogue by same speaker into a single row
-        # transcription_df['group'] = (transcription_df['speaker'] != transcription_df['speaker'].shift()).cumsum()
-        # transcription_df['text'] = transcription_df['text'].apply(lambda x: x + ' ')
-
-        # logging.info(f"transcription_df shape before groupby: {transcription_df.shape}")
-
-        # transcription_df = transcription_df.groupby(['speaker', 'group']).agg(
-        #     start=('start', 'first'),
-        #     end=('end', 'last'),
-        #     text=('text', 'sum')
-        # ).reset_index()
-
-        # transcription_df['duration'] = transcription_df['end'] - transcription_df['start']
-
-        # transcription_df.sort_values('start', inplace=True)
-        # transcription_df.drop(columns=['group'], inplace=True)
-        # transcription_df.reset_index(drop=True, inplace=True)
-
-        # logging.info(f"transcription_df shape after groupby: {transcription_df.shape}")
-
-        # logging.info(transcription_df.head())
-
-        # # 7. Check for overlapping timestamp intervals
-        # intervals = pd.IntervalIndex.from_arrays(transcription_df['start'], transcription_df['end'], closed='both')
-
-        # # Check for overlapping intervals excluding the interval itself
-        # transcription_df['overlap'] = [any(interval != other_interval and interval.overlaps(other_interval) 
-        #                     for other_interval in intervals) 
-        #                 for interval in intervals]
-
-        # # Filter rows that are part of an overlap
-        # assert not any(transcription_df['overlap']), "Overlapping timestamp intervals found"
-
-        # transcription_df.drop(columns=['overlap'], inplace=True)
-
-        # # 8. Log first few dialogues
-        # logging.info("Dialogue start...")
-
-        # n = 10
-
-        # for _, row in transcription_df.head(n).iterrows():
-        #     words = row['text'].split()
-        #     text = '\n'.join(' '.join(words[i:i+n]) for i in range(0, len(words), n))
-        #     logging.info(f"{row['speaker']}:\n{text}\n")
-
-        # 9. Save
+        # 5. Save
         os.makedirs('data/transcriptions', exist_ok=True)
         transcription_df.to_csv('data/transcriptions' + '/' + video_title + '.csv', index=False)
 
-        # 10. Delete audio
+        # 6. Delete audio
         logging.info("Deleting audio")
         delete_files_in_directory(AUDIO_OUTPUT_PATH)
 

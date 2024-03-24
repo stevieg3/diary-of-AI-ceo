@@ -295,7 +295,7 @@ def main():
         guest_name, intro_end_time = get_podcast_meta_data(file_name, ALL_PODCAST_META_DATA)
 
         if intro_end_time is None:
-            logging.info(f"Podcast episode {file_name.split('.')[0]} not found in podcast_meta_data.json. Skipping...")
+            logging.info(f"Podcast episode {file_name.split('.csv')[0]} not found in podcast_meta_data.json. Skipping...")
             continue
 
         # Load transcript
